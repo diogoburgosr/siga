@@ -1,4 +1,4 @@
-pipeline {
+//pipeline {
   node {
     def app
     agent {
@@ -30,4 +30,4 @@ pipeline {
       }
     }
   }
-}
+//}
