@@ -1,4 +1,5 @@
 pipeline {
+  def app
   agent {
     docker {
       image 'maven:3.5-jdk-7'
@@ -22,14 +23,10 @@ pipeline {
       }
     }
     stage('Image Build') {
-      agent {
-        dockerfile {
-          filename 'Dockerfile'
-        }
-
-      }
       steps {
-        dir(path: 'SigaDockerImage')
+        dir(path: 'SigaDockerImage'){
+          app = docker.build("sigadoc:dev")
+        }
       }
     }
   }
