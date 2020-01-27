@@ -79,6 +79,59 @@ public class GiServiceImpl implements GiService {
 		}
 		return resultado;
 	}
+	
+	@Override
+	public String loginLDAP(String matricula, String senha) {
+		String resultado = "";
+		CpIdentidade id = null;
+
+		try {
+
+			String urlLdap = System.getProperty("idp.ldap.url");
+			String domain = System.getProperty("idp.ldap.domain");
+
+			CpDao dao = CpDao.getInstance();
+			if (urlLdap != null) {
+				boolean autenticado = SigaLDAP.authenticateJndi(matricula, senha, urlLdap, domain);
+				if(!autenticado)
+					return resultado; 
+				
+				DpPessoa pessoa = dao.consultarDpPessoaPorLoginAD(matricula);
+
+				if (pessoa != null) {
+					List<CpIdentidade> l = dao.consultaIdentidades(pessoa);
+					for (CpIdentidade i : l) {
+						if (i.getCpTipoIdentidade().isTipoLdap()) {
+							id = i;
+							break;
+						}
+					}
+
+					if (id == null) {
+						id = new CpIdentidade();
+						id.setCpTipoIdentidade(dao.consultar(CpTipoIdentidade.LDAP, CpTipoIdentidade.class, false));
+						id.setCpOrgaoUsuario(pessoa.getOrgaoUsuario());
+						id.setDpPessoa(pessoa);
+						id.setDtCriacaoIdentidade(dao.consultarDataEHoraDoServidor());
+						id.setNmLoginIdentidade(matricula);
+						id.setHisDtIni(id.getDtCriacaoIdentidade());
+						id.setHisAtivo(1);
+						dao.iniciarTransacao();
+						dao.gravarComHistorico(id, null);
+						dao.commitTransacao();
+					}
+					
+					resultado = id.getDpPessoa().getSesbPessoa()+id.getDpPessoa().getMatricula();
+				}
+			} 
+
+		} catch (AplicacaoException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return resultado;
+	}
 
     @Override
 	public String dadosUsuario(String matricula) {

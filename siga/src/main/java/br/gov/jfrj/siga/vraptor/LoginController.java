@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.json.JSONObject;
 
+import antlr.Parser;
 import br.com.caelum.vraptor.Get;
 import br.com.caelum.vraptor.Post;
 import br.com.caelum.vraptor.Resource;
@@ -71,7 +72,14 @@ public class LoginController extends SigaController {
 	public void auth(String username, String password, String cont) throws IOException {
 		try {
 			GiService giService = Service.getGiService();
-			String usuarioLogado = giService.login(username, password);
+			String usuarioLogado = "";
+			
+			if(username.substring(0, 1).compareToIgnoreCase("i") == 0) {
+				usuarioLogado = giService.loginLDAP(username, password);
+				username = usuarioLogado;
+			}else
+				usuarioLogado = giService.login(username, password);
+				
 			if (usuarioLogado == null || usuarioLogado.trim().length() == 0) {
 				throw new RuntimeException("Falha de autenticação!");
 			}

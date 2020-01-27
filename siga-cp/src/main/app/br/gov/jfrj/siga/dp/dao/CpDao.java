@@ -1257,18 +1257,36 @@ public class CpDao extends ModeloDao {
 
 	public CpIdentidade consultaIdentidadeCadastrante(final String nmUsuario,
 			boolean fAtiva) throws AplicacaoException {
-		List<CpIdentidade> lista = consultaIdentidadesCadastrante(nmUsuario,
-				fAtiva);
-		// obtem preferencialmente identidade de formulario - unico formato que
-		// existia anteriormente
-		for (CpIdentidade idLista : lista) {
-			if (idLista.getCpTipoIdentidade().isTipoFormulario()) {
-				return idLista;
+		
+		if(nmUsuario.substring(0, 1).compareToIgnoreCase("i") == 0) {
+			DpPessoa pessoa = consultarDpPessoaPorLoginAD(nmUsuario);
+			CpIdentidade id = null;
+
+			if (pessoa != null) {
+				List<CpIdentidade> l = consultaIdentidades(pessoa);
+				for (CpIdentidade i : l) {
+					if (i.getCpTipoIdentidade().isTipoLdap()) {
+						id = i;
+						break;
+					}
+				}
 			}
+			return id;
+			
+		}else {
+			List<CpIdentidade> lista = consultaIdentidadesCadastrante(nmUsuario,
+					fAtiva);
+			// obtem preferencialmente identidade de formulario - unico formato que
+			// existia anteriormente
+			for (CpIdentidade idLista : lista) {
+				if (idLista.getCpTipoIdentidade().isTipoFormulario()) {
+					return idLista;
+				}
+			}
+			// se nao encontrar, retorna o primeiro, como era antes.
+			final CpIdentidade id = lista.get(0);
+			return id;
 		}
-		// se nao encontrar, retorna o primeiro, como era antes.
-		final CpIdentidade id = lista.get(0);
-		return id;
 	}
 
 	@SuppressWarnings("unchecked")

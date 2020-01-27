@@ -152,6 +152,7 @@ import br.gov.jfrj.siga.ex.util.ProcessadorModeloFreemarker;
 import br.gov.jfrj.siga.ex.util.PublicacaoDJEBL;
 import br.gov.jfrj.siga.ex.util.BIE.ManipuladorEntrevista;
 import br.gov.jfrj.siga.hibernate.ExDao;
+import br.gov.jfrj.siga.ldap.SigaLDAP;
 import br.gov.jfrj.siga.model.ContextoPersistencia;
 import br.gov.jfrj.siga.model.Objeto;
 import br.gov.jfrj.siga.model.ObjetoBase;
@@ -1877,10 +1878,19 @@ public class ExBL extends CpBL {
 				throw new AplicacaoException(
 						"Senha do Subscritor não foi informada.");
 
-			final String hashAtual = GeraMessageDigest.executaHash(
-					senhaSubscritor.getBytes(), "MD5");
+			boolean senhaValida = false;
+			String urlLdap = System.getProperty("idp.ldap.url");
+			
+			if(urlLdap != null) {
+				String domain = System.getProperty("idp.ldap.domain");
+				
+				senhaValida = SigaLDAP.authenticateJndi(matriculaSubscritor, senhaSubscritor, urlLdap, domain);
+			}else {
+				final String hashAtual = GeraMessageDigest.executaHash(
+						senhaSubscritor.getBytes(), "MD5");
 
-			boolean senhaValida = id.getDscSenhaIdentidade().equals(hashAtual);
+				senhaValida = id.getDscSenhaIdentidade().equals(hashAtual);
+			}
 
 			if (!senhaValida) {
 				throw new AplicacaoException("Senha do subscritor inválida.");
